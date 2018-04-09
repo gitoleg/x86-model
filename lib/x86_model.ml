@@ -22,22 +22,36 @@ module R32 = struct
     end)
 
   type cpu = {
-    reg     : (op -> exp) ec;
-    load    : exp -> bitwidth -> exp;
-    store   : exp -> exp -> bitwidth -> rtl;
+    reg         : (op -> exp) ec;
+    load        : exp -> bitwidth -> exp;
+    store       : exp -> exp -> bitwidth -> rtl;
+    word_width  : bitwidth;
+    word_width' : exp;
+    rsp         : exp;
   }
 
   let cpu = {
     reg = Reg.reg_ec model;
     load = M.load;
     store = M.store;
+    word_width  = word;
+    word_width' = Exp.of_word (Word.of_int ~width:32 32);
+    rsp = Exp.of_var rsp;
   }
 
 end
 
+open R32
 
-
-
+let push cpu ops =
+  let src = unsigned cpu.reg ops.(0) in
+  let tmp = unsigned var cpu.word_width in
+  let bytes = unsigned const word 8 in
+  RTL.[
+    tmp := src;
+    src := cpu.rsp - cpu.word_width' / bytes;
+    cpu.store cpu.rsp tmp word;
+  ]
 
 (** push
     mov

@@ -20,3 +20,10 @@ Library x86_model_lifter
   CompiledObject: best
   Install:        true
   BuildDepends:   bap, bap-rtl, bap-x86-cpu
+
+Executable "run"
+  Path:           src
+  MainIs:         run.ml
+  CompiledObject: best
+  Install:        true
+  BuildDepends:   bap.plugins, findlib.dynload, x86_model_lifter, cmdliner

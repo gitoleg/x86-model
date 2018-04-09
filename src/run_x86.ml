@@ -59,7 +59,9 @@ let create_memory arch s addr =
 
 let to_bil arch mem insn =
   (* let module T = (val (target_of_arch arch)) in *)
-  X86_model.lifter mem insn
+  match X86_model.lifter mem insn with
+  | Error _ as e -> e
+  | Ok bil -> Ok (Bil.fold_consts (Stmt.normalize bil))
 
 let print_insn insn =
   let name = Dis.Insn.name insn in

@@ -9,7 +9,7 @@ type cpu = {
   store       : exp -> exp -> bitwidth -> rtl;
   word_width  : bitwidth;
   word_width' : exp;
-  rsp         : exp;
+  sp          : exp;
 }
 
 include Model.Lifter(struct
@@ -34,13 +34,21 @@ module R32 = struct
       let endian = LittleEndian
     end)
 
+  let reg_or_nil : bool -> op -> exp = fun sign op ->
+    let apply_sign =
+      if sign then signed
+      else unsigned in
+    try
+      apply_sign (Reg.reg_ec model) op
+    with _ -> apply_sign const word 0
+
   let cpu = {
     reg = Reg.reg_ec model;
     load = M.load;
     store = M.store;
     word_width  = word;
     word_width' = Exp.of_word (Word.of_int ~width:32 32);
-    rsp = Exp.of_var rsp;
+    sp = Exp.of_var rsp;
   }
 
   let () = init cpu
@@ -53,8 +61,8 @@ let push_r cpu ops =
   let bytes = unsigned const word 8 in
   RTL.[
     tmp := src;
-    src := cpu.rsp - cpu.word_width' / bytes;
-    cpu.store cpu.rsp tmp word;
+    cpu.sp := cpu.sp - cpu.word_width' / bytes;
+    cpu.store cpu.sp tmp word;
   ]
 
 let push_i cpu ops =
@@ -63,18 +71,21 @@ let push_i cpu ops =
   let bytes = unsigned const word 8 in
   RTL.[
     tmp := src;
-    cpu.rsp := cpu.rsp - cpu.word_width' / bytes;
-    cpu.store cpu.rsp tmp word;
+    cpu.sp := cpu.sp - cpu.word_width' / bytes;
+    cpu.store cpu.sp tmp word;
   ]
 
 let push_rmm cpu ops =
-  let src = unsigned imm ops.(3) in
+  let base  = unsigned reg_or_nil ops.(0) in
+  let index = unsigned imm ops.(1) in
+  let scale = unsigned cpu.reg ops.(2) in
+  let disp  = unsigned imm ops.(3) in
   let tmp = unsigned var cpu.word_width in
   let bytes = unsigned const word 8 in
   RTL.[
-    tmp := cpu.load src word;
-    cpu.rsp := cpu.rsp - cpu.word_width' / bytes;
-    cpu.store cpu.rsp tmp word;
+    tmp := cpu.load (base + scale * index + disp) word;
+    cpu.sp := cpu.sp - cpu.word_width' / bytes;
+    cpu.store cpu.sp tmp word;
   ]
 
 let () = register "PUSH32r" push_r

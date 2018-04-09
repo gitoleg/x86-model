@@ -47,7 +47,7 @@ module R32 = struct
 
 end
 
-let push cpu ops =
+let push_r cpu ops =
   let src = unsigned cpu.reg ops.(0) in
   let tmp = unsigned var cpu.word_width in
   let bytes = unsigned const word 8 in
@@ -57,8 +57,29 @@ let push cpu ops =
     cpu.store cpu.rsp tmp word;
   ]
 
-let () = register "PUSH32r" push
+let push_i cpu ops =
+  let src = unsigned imm ops.(0) in
+  let tmp = unsigned var cpu.word_width in
+  let bytes = unsigned const word 8 in
+  RTL.[
+    tmp := src;
+    cpu.rsp := cpu.rsp - cpu.word_width' / bytes;
+    cpu.store cpu.rsp tmp word;
+  ]
 
+let push_rmm cpu ops =
+  let src = unsigned imm ops.(3) in
+  let tmp = unsigned var cpu.word_width in
+  let bytes = unsigned const word 8 in
+  RTL.[
+    tmp := cpu.load src word;
+    cpu.rsp := cpu.rsp - cpu.word_width' / bytes;
+    cpu.store cpu.rsp tmp word;
+  ]
+
+let () = register "PUSH32r" push_r
+let () = register "PUSHi32" push_i
+let () = register "PUSH32rmm" push_rmm
 
 (** push
     mov

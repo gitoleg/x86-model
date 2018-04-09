@@ -3,6 +3,19 @@ open Bap.Std
 open Bap_rtl.Std
 open X86_env
 
+type cpu = {
+  reg         : (op -> exp) ec;
+  load        : exp -> bitwidth -> exp;
+  store       : exp -> exp -> bitwidth -> rtl;
+  word_width  : bitwidth;
+  word_width' : exp;
+  rsp         : exp;
+}
+
+include Model.Lifter(struct
+    type t = cpu
+  end)
+
 module R32 = struct
   open Model
   open R32
@@ -21,15 +34,6 @@ module R32 = struct
       let endian = LittleEndian
     end)
 
-  type cpu = {
-    reg         : (op -> exp) ec;
-    load        : exp -> bitwidth -> exp;
-    store       : exp -> exp -> bitwidth -> rtl;
-    word_width  : bitwidth;
-    word_width' : exp;
-    rsp         : exp;
-  }
-
   let cpu = {
     reg = Reg.reg_ec model;
     load = M.load;
@@ -39,9 +43,9 @@ module R32 = struct
     rsp = Exp.of_var rsp;
   }
 
-end
+  let () = init cpu
 
-open R32
+end
 
 let push cpu ops =
   let src = unsigned cpu.reg ops.(0) in
@@ -52,6 +56,9 @@ let push cpu ops =
     src := cpu.rsp - cpu.word_width' / bytes;
     cpu.store cpu.rsp tmp word;
   ]
+
+let () = register "PUSH32r" push
+
 
 (** push
     mov

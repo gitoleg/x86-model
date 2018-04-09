@@ -2,6 +2,8 @@ open Core_kernel.Std
 open Bap.Std
 open Bap_plugins.Std
 
+include Self ()
+
 module Dis = Disasm_expert.Basic
 open X86_model
 
@@ -56,8 +58,8 @@ let create_memory arch s addr =
     eprintf "something went wrong\n"; exit 1
 
 let to_bil arch mem insn =
-  let module T = (val (target_of_arch arch)) in
-  T.lift mem insn
+  (* let module T = (val (target_of_arch arch)) in *)
+  X86_model.lifter mem insn
 
 let print_insn insn =
   let name = Dis.Insn.name insn in

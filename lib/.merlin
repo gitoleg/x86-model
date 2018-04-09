@@ -1,0 +1,7 @@
+B ../_build/lib
+S .
+
+PKG bap
+PKG bap-rtl
+PKG bap-x86-cpu
+PKG core_kernel

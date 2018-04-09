@@ -1,0 +1,22 @@
+OASISFormat:  0.4
+Name:         x86-model
+Version:      0.2
+Synopsis:     x86 lifter
+Authors:      BAP Team
+Maintainers:  Ivan Gotovchits <ivg@ieee.org>,
+              Oleg Kamenkov <forown@yandex.ru>
+License:      MIT
+Copyrights:   (C) 2016 Carnegie Mellon University
+Plugins:      META (0.4), DevFiles (0.4)
+BuildTools:   ocamlbuild
+BuildDepends: ppx_jane, core_kernel, bap
+AlphaFeatures: ocamlbuild_more_args
+XOCamlbuildExtraArgs: -j 8
+
+Library x86_model_lifter
+  Path:           lib
+  FindLibName:    x86_model_lifter
+  Modules:        X86_model
+  CompiledObject: best
+  Install:        true
+  BuildDepends:   bap, bap-rtl, bap-x86-cpu

@@ -20,6 +20,15 @@ include Model.Lifter(struct
     type t = cpu
   end)
 
+module Common = struct
+  let cf = Exp.of_var cf
+  let oF = Exp.of_var oF
+  let pf = Exp.of_var pf
+  let af = Exp.of_var af
+  let zf = Exp.of_var zf
+  let sf = Exp.of_var sf
+end
+
 module R32 = struct
   open Model
   open R32
@@ -49,7 +58,6 @@ module R32 = struct
       | None -> Exp.of_word (Word.zero 32) in
     reg find
 
-
   let cpu = {
     reg = Reg.reg_ec model;
     reg_or_nil;
@@ -64,6 +72,8 @@ module R32 = struct
   let () = init cpu
 
 end
+
+open Common
 
 let push32_r cpu ops =
   let src = unsigned cpu.reg ops.(0) in
@@ -186,9 +196,54 @@ let () = register "MOV32ao32" mov32_ao_32
 let () = register "MOVZX32rm8" movzx32rm8
 let () = register "MOVSX32rr8" movsx32rr8
 
-(** push
-    mov
-    test
+
+let test32_rr cpu ops =
+  let op1 = unsigned cpu.reg ops.(0) in
+  let op2 = unsigned cpu.reg ops.(1) in
+  let tmp = unsigned var word in
+  RTL.[
+    tmp := op1 land op2;
+    oF := zero;
+    cf := zero;
+    pf := zero; (** TODO: parity flag need to be calculated *)
+    sf := msb tmp;
+    zf := tmp = zero;
+    (** TODO: af flag is set with bil unknown - do we really need it ?  *)
+  ]
+
+let test8_rr cpu ops =
+  let op1 = unsigned cpu.reg ops.(0) in
+  let op2 = unsigned cpu.reg ops.(1) in
+  let tmp = unsigned var byte in
+  RTL.[
+    tmp := op1 land op2;
+    oF := zero;
+    cf := zero;
+    pf := zero; (** TODO: parity flag need to be calculated *)
+    sf := msb tmp;
+    zf := tmp = zero;
+    (** TODO: af flag is set with bil unknown - do we really need it ?  *)
+  ]
+
+
+let () = register "TEST32rr" test32_rr
+let () = register "TEST8rr" test8_rr
+
+let je cpu ops =
+  let x = unsigned imm ops.(0) in
+  RTL.[
+    when_ zf [
+      jmp x;
+    ];
+  ]
+
+let () = register "JE_1" je
+
+
+
+(**
+
+
     je
     call
     add
